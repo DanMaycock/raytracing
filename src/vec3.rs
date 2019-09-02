@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, Sub, Mul, Neg};
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Vec3 {
     data: [f32; 3],
 }
@@ -74,12 +74,6 @@ impl Vec3 {
     pub fn length(&self) -> f32 {
         self.squared_length().sqrt()
     }
-    pub fn make_unit_vector(&mut self) {
-        let k  = 1.0 / self.length();
-        self.data[0] *= k;
-        self.data[1] *= k;
-        self.data[2] * k;
-    }
 
     pub fn scalar_mul(&self, scalar: f32) -> Vec3 {
         Vec3::new(self.x() * scalar, self.y() * scalar, self.z() * scalar)
@@ -91,6 +85,14 @@ impl Vec3 {
 
     pub fn dot(&self, other: &Vec3) -> f32 {
         self.x() * other.x() + self.y() * other.y() + self.z() * other.z()
+    }
+
+    pub fn cross(&self, other: &Vec3) -> Vec3 {
+        Vec3::new(
+            self.data[1] * other.data[2] - self.data[2] * other.data[1],
+            self.data[2] * other.data[0] - self.data[0] * other.data[2],
+            self.data[0] * other.data[1] - self.data[1] * other.data[0],
+        )
     }
 
     pub fn lerp(&self, other: &Vec3, t: f32) -> Vec3 {

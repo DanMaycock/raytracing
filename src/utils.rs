@@ -7,7 +7,17 @@ pub fn random_in_unit_sphere() -> Vec3 {
         let p =
             Vec3::new(rng.gen(), rng.gen(), rng.gen()).scalar_mul(2.0) - Vec3::new(1.0, 1.0, 1.0);
         if p.squared_length() < 1.0 {
-            return p;
+            return p
+        }
+    }
+}
+
+pub fn random_in_unit_disk() -> Vec3 {
+    let mut rng = thread_rng();
+    loop {
+        let p = Vec3::new(rng.gen(), rng.gen(), 0.0).scalar_mul(2.0) - Vec3::new(1.0, 1.0, 0.0);
+        if p.dot(&p) < 1.0 {
+            return p
         }
     }
 }

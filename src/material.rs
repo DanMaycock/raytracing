@@ -16,9 +16,9 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray_in: &Ray, hit_record: &HitRecord) -> Option<(Vec3, Ray)> {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Vec3, Ray)> {
         let target = hit_record.point + hit_record.normal + random_in_unit_sphere();
-        let scattered = Ray::new(hit_record.point, target - hit_record.point);
+        let scattered = Ray::new_at_time(hit_record.point, target - hit_record.point, ray_in.time());
         let attenuation = self.albedo;
         Some((attenuation, scattered))
     }
@@ -38,9 +38,10 @@ pub struct Metal {
 impl Material for Metal {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<(Vec3, Ray)> {
         let reflected = reflect(&ray_in.direction().normalize(), &hit_record.normal);
-        let scattered = Ray::new(
+        let scattered = Ray::new_at_time(
             hit_record.point,
             reflected + random_in_unit_sphere().scalar_mul(self.fuzz),
+            ray_in.time()
         );
         let attenuation = self.albedo;
         Some((attenuation, scattered))
@@ -86,9 +87,9 @@ impl Material for Dielectric {
         };
 
         if rand::thread_rng().gen::<f32>() < reflect_prob {
-            Some((attenuation, Ray::new(hit_record.point, reflected)))
+            Some((attenuation, Ray::new_at_time(hit_record.point, reflected, ray_in.time())))
         } else {
-            Some((attenuation, Ray::new(hit_record.point, refracted.unwrap())))
+            Some((attenuation, Ray::new_at_time(hit_record.point, refracted.unwrap(), ray_in.time())))
         }
     }
 }
