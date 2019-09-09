@@ -6,6 +6,8 @@ mod ray;
 mod sphere;
 mod utils;
 mod vec3;
+mod bounding_box;
+mod bvh_node;
 
 use rand::prelude::*;
 use std::fs::File;
@@ -13,10 +15,11 @@ use std::io::{Error, Write};
 
 use crate::camera::Camera;
 use crate::material::{Dielectric, Lambertian, Metal};
-use crate::object::{Object, ObjectList};
+use crate::object::{Object};
 use crate::ray::Ray;
 use crate::sphere::{Sphere, MovingSphere};
 use crate::vec3::Vec3;
+use crate::bvh_node::BvhNode;
 
 fn get_color(ray: &Ray, world: &dyn Object, depth: u32) -> Vec3 {
     if let Some(hit_record) = world.hit(ray, 0.001, std::f32::MAX) {
@@ -83,8 +86,8 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn test_scene() -> ObjectList {
-    let mut world = ObjectList::default();
+fn test_scene() -> BvhNode {
+    let mut world: Vec<Box<dyn Object>> = vec![];
     world.push(Box::new(Sphere::new(
         Vec3::new(0.0, 0.0, -1.0),
         0.5,
@@ -110,11 +113,11 @@ fn test_scene() -> ObjectList {
         -0.45,
         Box::new(Dielectric::new(1.5)),
     )));
-    world
+    BvhNode::new(world)
 }
 
-fn random_scene(rng: &mut ThreadRng) -> ObjectList {
-    let mut world = ObjectList::default();
+fn random_scene(rng: &mut ThreadRng) -> BvhNode {
+    let mut world: Vec<Box<dyn Object>> = vec![];
     world.push(Box::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -134,9 +137,9 @@ fn random_scene(rng: &mut ThreadRng) -> ObjectList {
                     world.push(Box::new(MovingSphere::new(
                         center,
                         center + Vec3::new(0.0, 0.5 * rng.gen::<f32>(), 0.0),
+                        0.2,
                         0.0,
                         1.0,
-                        0.2,
                         Box::new(Lambertian::new(Vec3::new(
                             rng.gen::<f32>() * rng.gen::<f32>(),
                             rng.gen::<f32>() * rng.gen::<f32>(),
@@ -183,5 +186,5 @@ fn random_scene(rng: &mut ThreadRng) -> ObjectList {
         1.0,
         Box::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0)),
     )));
-    world
+    BvhNode::new(world)
 }
