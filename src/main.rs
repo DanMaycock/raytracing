@@ -12,6 +12,8 @@ mod bvh_node;
 use rand::prelude::*;
 use std::fs::File;
 use std::io::{Error, Write};
+use rayon::prelude::*;
+use std::time::Instant;
 
 use crate::camera::Camera;
 use crate::material::{Dielectric, Lambertian, Metal};
@@ -37,6 +39,7 @@ fn get_color(ray: &Ray, world: &dyn Object, depth: u32) -> Vec3 {
 }
 
 fn main() -> Result<(), Error> {
+    let now = Instant::now();
     let path = "output.ppm";
     let mut output = File::create(path)?;
     let nx = 1200;
@@ -60,20 +63,21 @@ fn main() -> Result<(), Error> {
         0.0,
         1.0
     );
-    let mut rng = thread_rng();
+
 
     //let world = test_scene();
-    let world = random_scene(&mut rng);
+    let world = random_scene();
+    println!("Scene created after {}s", now.elapsed().as_secs());
 
     for j in (0..ny).rev() {
         for i in 0..nx {
-            let mut color = Vec3::new(0.0, 0.0, 0.0);
-            for _ in 0..ns {
+            let mut color: Vec3 = (0..ns).into_par_iter().map(|_| {
+                let mut rng = thread_rng();
                 let u = (i as f32 + rng.gen::<f32>()) / nx as f32;
                 let v = (j as f32 + rng.gen::<f32>()) / ny as f32;
                 let ray = camera.get_ray(u, v);
-                color += get_color(&ray, &world, 0);
-            }
+                get_color(&ray, &world, 0)
+            }).sum();
             color = color.scalar_mul(1.0 / ns as f32);
             color = Vec3::new(color.x().sqrt(), color.y().sqrt(), color.z().sqrt());
             let ir = (255.99 * color.r()) as i32;
@@ -82,6 +86,8 @@ fn main() -> Result<(), Error> {
             writeln!(output, "{} {} {}", ir, ig, ib)?;
         }
     }
+
+    println!("Completed {}s", now.elapsed().as_secs());
 
     Ok(())
 }
@@ -116,7 +122,8 @@ fn test_scene() -> BvhNode {
     BvhNode::new(world)
 }
 
-fn random_scene(rng: &mut ThreadRng) -> BvhNode {
+fn random_scene() -> BvhNode {
+    let mut rng = thread_rng();
     let mut world: Vec<Box<dyn Object>> = vec![];
     world.push(Box::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),

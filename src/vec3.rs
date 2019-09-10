@@ -1,4 +1,5 @@
 use std::ops::{Add, AddAssign, Sub, Mul, Neg};
+use std::iter::Sum;
 
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Vec3 {
@@ -45,6 +46,12 @@ impl Neg for Vec3 {
     #[inline]
     fn neg(self) -> Vec3 {
         Vec3::new(-self.data[0], -self.data[1], -self.data[2])
+    }
+}
+
+impl Sum for Vec3 {
+    fn sum<I: Iterator<Item=Vec3>>(iter: I) -> Vec3 {
+        iter.fold(Vec3::new(0.0, 0.0, 0.0), |a, b| a + b)
     }
 }
 

@@ -18,7 +18,7 @@ impl<'a> HitRecord<'a> {
     }
 }
 
-pub trait Object {
+pub trait Object: Sync {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
 
     fn bounding_box(&self) -> Option<&BoundingBox>;
